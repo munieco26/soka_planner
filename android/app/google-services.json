@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "409264398572",
+    "project_id": "agendasoka-86bad",
+    "storage_bucket": "agendasoka-86bad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409264398572:android:9eba978b996cd3e185c5c9",
+        "android_client_info": {
+          "package_name": "com.sgiar.agenda"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQg6Kc-nVDg1ueYRuqX1V7b5QW6OpSgc0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
