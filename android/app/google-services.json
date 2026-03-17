@@ -1,26 +1,36 @@
 {
   "project_info": {
-    "project_number": "409264398572",
-    "project_id": "agendasoka-86bad",
-    "storage_bucket": "agendasoka-86bad.firebasestorage.app"
+    "project_number": "777301808825",
+    "project_id": "soka-planner",
+    "storage_bucket": "soka-planner.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:409264398572:android:9eba978b996cd3e185c5c9",
+        "mobilesdk_app_id": "1:777301808825:android:4f0d3cb32f74866fbf2d68",
         "android_client_info": {
-          "package_name": "com.sgiar.agenda"
+          "package_name": "com.mmlab.sokaplanner"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "777301808825-pj376vtnd093h0neveoa4mub98gprkv7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyAQg6Kc-nVDg1ueYRuqX1V7b5QW6OpSgc0"
+          "current_key": "AIzaSyACie_9C1lrNTPqyBoUeoEr2KBE-hqIquM"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "777301808825-pj376vtnd093h0neveoa4mub98gprkv7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

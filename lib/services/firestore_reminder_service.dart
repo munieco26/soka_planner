@@ -69,7 +69,7 @@ class FirestoreReminderService {
         'eventStart': Timestamp.fromDate(event.start),
         'eventEnd': event.end != null ? Timestamp.fromDate(event.end!) : null,
         'eventLocation': event.location,
-        'eventIsTask': event.isTask,
+        'eventIsAllDay': event.isAllDay,
         'reminderType': type.name, // 'push'
         'reminderTiming':
             timing.name, // 'thirtyMinutes', 'oneHour', 'twoHours', etc.
@@ -397,9 +397,10 @@ class FirestoreReminderService {
                 ? (reminderData['eventEnd'] as Timestamp).toDate()
                 : null,
             location: reminderData['eventLocation'] as String?,
-            tag: '',
-            color: 0xFF2196F3, // Default color
-            isTask: reminderData['eventIsTask'] as bool? ?? false,
+            color: 0xFF2196F3,
+            calendarId: reminderData['calendarId'] as String? ?? '',
+            createdBy: '',
+            isAllDay: reminderData['eventIsAllDay'] as bool? ?? false,
           );
 
           // Schedule local notification

@@ -183,9 +183,9 @@ class ReminderService {
     final location = event.location != null && event.location!.isNotEmpty
         ? '\n📍 ${event.location}'
         : '';
-    final time = event.isTask
+    final time = event.isAllDay
         ? ''
-        : '\n🕐 ${event.start.hour.toString().padLeft(2, '0')}:${event.start.minute.toString().padLeft(2, '0')}';
+        : '\n${event.start.hour.toString().padLeft(2, '0')}:${event.start.minute.toString().padLeft(2, '0')}';
     return '${event.title}$time$location';
   }
 

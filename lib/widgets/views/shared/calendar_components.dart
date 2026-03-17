@@ -123,8 +123,8 @@ class CalendarDayCell extends StatelessWidget {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  if (event.attachments.isNotEmpty) ...[
-                                    SmallAttachmentIcon(event, fgColor),
+                                  if (event.flyerUrls.isNotEmpty) ...[
+                                    Icon(Icons.image, size: 12, color: fgColor),
                                     const SizedBox(width: 4),
                                   ],
                                   Expanded(
@@ -172,29 +172,4 @@ class CalendarDayCell extends StatelessWidget {
   }
 }
 
-class SmallAttachmentIcon extends StatelessWidget {
-  final Event event;
-  final Color color;
-  const SmallAttachmentIcon(this.event, this.color, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Check if there's an image attachment
-    bool hasImage = false;
-    for (final a in event.attachments) {
-      if (a.mimeType?.startsWith('image/') ?? false) {
-        hasImage = true;
-        break;
-      }
-    }
-
-    // Show appropriate icon based on attachment type
-    // Note: We don't load iconLink from Google Drive due to CORS restrictions in web browsers
-    if (hasImage) {
-      return const Icon(Icons.image, size: 12, color: AppColors.textDark);
-    }
-
-    return Icon(Icons.attachment, size: 12, color: color);
-  }
-}
 

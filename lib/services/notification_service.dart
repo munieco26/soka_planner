@@ -43,8 +43,8 @@ class NotificationService {
     int? eventId,
   }) async {
     final androidDetails = AndroidNotificationDetails(
-      'agenda_soka_channel',
-      'Agenda Soka',
+      'soka_planner_channel',
+      'Soka Planner',
       channelDescription: 'Notificaciones de eventos y actividades',
       importance: Importance.high,
       priority: Priority.high,
@@ -88,7 +88,7 @@ class NotificationService {
     if (scheduledTime.isBefore(DateTime.now())) return;
 
     final androidDetails = AndroidNotificationDetails(
-      'agenda_soka_events',
+      'soka_planner_events',
       'Eventos Soka',
       channelDescription: 'Recordatorios de eventos próximos',
       importance: Importance.high,

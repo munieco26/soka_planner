@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
 import 'notification_storage_service.dart';
@@ -98,15 +100,23 @@ class FirebaseMessagingService {
   static Future<void> _saveTokenToBackend(String? token) async {
     if (token == null) return;
 
-    // TODO: Send token to your backend API
-    // POST /api/devices/register
-    // {
-    //   "token": token,
-    //   "userId": userId, // if you have user authentication
-    //   "platform": "android" or "ios"
-    // }
-    print('💾 Saving token to backend: $token');
-    // For now, just print it. You'll need to implement the API call.
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Save token under user's fcmTokens subcollection
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('fcmTokens')
+          .doc(token)
+          .set({
+        'token': token,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error saving FCM token: $e');
+    }
   }
 
   static Future<void> _handleForegroundMessage(RemoteMessage message) async {

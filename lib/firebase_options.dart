@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -52,13 +49,25 @@ class DefaultFirebaseOptions {
     }
   }
 
+  // TODO: Replace with output of `flutterfire configure` for project soka-planner
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'YOUR_WEB_API_KEY',
+    authDomain: 'soka-planner.firebaseapp.com',
+    projectId: 'soka-planner',
+    storageBucket: 'soka-planner.firebasestorage.app',
+    messagingSenderId: 'YOUR_SENDER_ID',
+    appId: 'YOUR_WEB_APP_ID',
+    measurementId: 'YOUR_MEASUREMENT_ID',
+  );
+
+  // TODO: Replace with output of `flutterfire configure` for project soka-planner
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: "AIzaSyBsgjQhrHIoWX2zRvmlpjnkfQYGLi-vNC4",
-    authDomain: "agendasoka-86bad.firebaseapp.com",
-    projectId: "agendasoka-86bad",
-    storageBucket: "agendasoka-86bad.firebasestorage.app",
-    messagingSenderId: "409264398572",
-    appId: "1:409264398572:web:3625e63465a69c8a85c5c9",
-    measurementId: "G-W8R35CC4DD",
+    apiKey: 'YOUR_ANDROID_API_KEY',
+    authDomain: 'soka-planner.firebaseapp.com',
+    projectId: 'soka-planner',
+    storageBucket: 'soka-planner.firebasestorage.app',
+    messagingSenderId: 'YOUR_SENDER_ID',
+    appId: 'YOUR_ANDROID_APP_ID',
+    measurementId: 'YOUR_MEASUREMENT_ID',
   );
 }

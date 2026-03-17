@@ -4,9 +4,10 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   cloud_firestore
+  file_selector_windows
+  firebase_auth
   firebase_core
-  geolocator_windows
-  permission_handler_windows
+  firebase_storage
   share_plus
   url_launcher_windows
 )

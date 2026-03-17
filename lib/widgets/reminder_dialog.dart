@@ -129,7 +129,7 @@ class _ReminderDialogState extends State<ReminderDialog> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<ReminderTiming>(
-              initialValue: _selectedTiming,
+              value: _selectedTiming,
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: const [
                 DropdownMenuItem(

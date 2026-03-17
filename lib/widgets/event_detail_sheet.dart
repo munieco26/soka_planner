@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/event.dart';
-import '../models/event_attachment.dart';
 import '../utils/globals.dart';
 import '../services/reminder_service.dart';
 import '../services/reminder_preferences_service.dart';
 import 'reminder_dialog.dart';
+import 'flyer_gallery_widget.dart';
 
 class EventDetailSheet {
-  static void show(BuildContext context, Event event) {
-    final df = event.isTask
+  static void show(BuildContext context, Event event,
+      {bool canEdit = false, VoidCallback? onEdit, VoidCallback? onDelete}) {
+    final df = event.isAllDay
         ? DateFormat('EEEE d MMMM yyyy', 'es_AR')
         : DateFormat('EEEE d MMMM • HH:mm', 'es_AR');
 
@@ -20,7 +20,13 @@ class EventDetailSheet {
       showDragHandle: true,
       isScrollControlled: false,
       backgroundColor: Colors.transparent,
-      builder: (_) => _EventDetailContent(event: event, dateFormat: df),
+      builder: (_) => _EventDetailContent(
+        event: event,
+        dateFormat: df,
+        canEdit: canEdit,
+        onEdit: onEdit,
+        onDelete: onDelete,
+      ),
     );
   }
 }
@@ -28,22 +34,31 @@ class EventDetailSheet {
 class _EventDetailContent extends StatelessWidget {
   final Event event;
   final DateFormat dateFormat;
+  final bool canEdit;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
-  const _EventDetailContent({required this.event, required this.dateFormat});
+  const _EventDetailContent({
+    required this.event,
+    required this.dateFormat,
+    this.canEdit = false,
+    this.onEdit,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bgColor = AppColors.secondary; // fondo pastel neutro
-    final accent = AppColors.primary; // azul institucional SGIAR
-    final cleanedDescription = _getCleanDescription(event.description);
+    final bgColor = AppColors.secondary;
+    final accent = AppColors.primary;
 
     return SafeArea(
       top: false,
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
               color: AppColors.black.withOpacity(0.1),
@@ -57,7 +72,7 @@ class _EventDetailContent extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- drag handle visual
+            // Drag handle
             Center(
               child: Container(
                 width: 36,
@@ -70,7 +85,7 @@ class _EventDetailContent extends StatelessWidget {
               ),
             ),
 
-            // --- título del evento
+            // Title
             Text(
               event.title,
               style: theme.textTheme.titleLarge?.copyWith(
@@ -80,24 +95,24 @@ class _EventDetailContent extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // --- fecha y hora
+            // Date/time
             _buildInfoRow(
               Icons.schedule,
-              event.isTask
-                  ? 'Vencimiento: ${dateFormat.format(event.due ?? event.start)}'
+              event.isAllDay
+                  ? 'Todo el día - ${dateFormat.format(event.start)}'
                   : dateFormat.format(event.start),
               accent,
             ),
 
-            // --- ubicación
+            // Location
             if (event.location?.isNotEmpty == true)
               _buildInfoRow(Icons.place, event.location!, accent),
 
-            // --- descripción
-            if (cleanedDescription?.isNotEmpty == true) ...[
+            // Description
+            if (event.description?.isNotEmpty == true) ...[
               const SizedBox(height: 16),
               Text(
-                cleanedDescription!,
+                event.description!,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.black87,
                   height: 1.4,
@@ -105,40 +120,17 @@ class _EventDetailContent extends StatelessWidget {
               ),
             ],
 
-            if (event.attachments.isNotEmpty) ...[
+            // Flyer gallery
+            if (event.flyerUrls.isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text(
-                'Adjuntos',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Column(
-                children: event.attachments
-                    .map(
-                      (a) => ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        leading: Icon(
-                          a.isImage ? Icons.image : Icons.attachment,
-                          size: 22,
-                        ),
-                        title: Text(a.title ?? 'Archivo'),
-                        onTap: () => _openAttachmentLink(context, a),
-                      ),
-                    )
-                    .toList(),
-              ),
+              FlyerGalleryWidget(flyerUrls: event.flyerUrls),
             ],
 
             const SizedBox(height: 20),
 
-            // --- acciones
+            // Actions
             Row(
               children: [
-                // Only show action buttons if event is in the future
                 if (_isEventInFuture()) ...[
                   Expanded(
                     child: FilledButton.icon(
@@ -165,21 +157,26 @@ class _EventDetailContent extends StatelessWidget {
                       label: const Text('Recordar'),
                     ),
                   ),
-                  if (!event.isTask && event.location?.isNotEmpty == true) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: accent.withOpacity(0.6)),
-                          foregroundColor: accent,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: () => _openMap(context, event.location!),
-                        icon: const Icon(Icons.map_outlined),
-                        label: const Text('Mapa'),
-                      ),
-                    ),
-                  ],
+                ],
+                if (canEdit) ...[
+                  const SizedBox(width: 12),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onEdit?.call();
+                    },
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: 'Editar',
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onDelete?.call();
+                    },
+                    icon:
+                        const Icon(Icons.delete_outline, color: AppColors.error),
+                    tooltip: 'Eliminar',
+                  ),
                 ],
               ],
             ),
@@ -189,32 +186,10 @@ class _EventDetailContent extends StatelessWidget {
     );
   }
 
-  // --- helper: check if event is in the future
   bool _isEventInFuture() {
-    final now = DateTime.now();
-    // For tasks, check due date or start date
-    // For events, check start date
-    final eventTime = event.isTask ? (event.due ?? event.start) : event.start;
-
-    return eventTime.isAfter(now);
+    return event.start.isAfter(DateTime.now());
   }
 
-  // --- helper: limpiar descripción removiendo patrones como {color: green}
-  String? _getCleanDescription(String? description) {
-    if (description == null || description.isEmpty) return null;
-
-    // Remove patterns like {color: green}, {color:blue}, {color: red}, etc.
-    // Matches: {color: value} or {color:value} with optional spaces
-    final cleaned = description
-        .replaceAll(RegExp(r'\{color\s*:\s*\w+\}', caseSensitive: false), '')
-        // Also remove any other {key: value} patterns that might exist
-        .replaceAll(RegExp(r'\{[^}]+\}'), '')
-        .trim();
-
-    return cleaned.isEmpty ? null : cleaned;
-  }
-
-  // --- helper: fila de ícono + texto
   Widget _buildInfoRow(IconData icon, String text, Color accent) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -238,76 +213,25 @@ class _EventDetailContent extends StatelessWidget {
     );
   }
 
-  // --- compartir evento usando el sistema nativo de compartir
   void _shareEvent(BuildContext context) async {
     if (!context.mounted) return;
-
     try {
-      // Prepare share text
-      final shareText = _prepareShareText();
+      final df = DateFormat('EEEE d MMMM yyyy • HH:mm', 'es_AR');
+      final text = '''
+${event.title}
 
-      // Use native share sheet on mobile (Android/iOS) and Web Share API on web
-      await Share.share(shareText, subject: event.title);
+${df.format(event.start)}
+${event.location != null && event.location!.isNotEmpty ? event.location! : ''}
+${event.description ?? ''}
+
+Soka Planner
+''';
+      await Share.share(text.trim(), subject: event.title);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al compartir: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text('Error al compartir: $e')),
         );
-      }
-    }
-  }
-
-  String _prepareShareText() {
-    final df = DateFormat('EEEE d MMMM yyyy • HH:mm', 'es_AR');
-    final dfTask = DateFormat('EEEE d MMMM yyyy', 'es_AR');
-
-    if (event.isTask) {
-      return '''
-✅ ${event.title}${event.completed ? ' (Completada)' : ''}
-
-📅 Vencimiento: ${dfTask.format(event.due ?? event.start)}
-${_getCleanDescription(event.description) != null ? '\n${_getCleanDescription(event.description)}' : ''}
-
-Agenda Soka
-''';
-    } else {
-      return '''
-📅 ${event.title}
-
-🕐 ${df.format(event.start)}
-${event.location != null && event.location!.isNotEmpty ? '📍 ${event.location}' : ''}
-${_getCleanDescription(event.description) != null ? '\n${_getCleanDescription(event.description)}' : ''}
-
-Agenda Soka
-''';
-    }
-  }
-
-  // --- abrir mapa
-  void _openMap(BuildContext context, String location) async {
-    final encodedLocation = Uri.encodeComponent(location);
-    final Uri googleMapsUrl = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=$encodedLocation',
-    );
-
-    try {
-      if (await canLaunchUrl(googleMapsUrl)) {
-        await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No se puede abrir Google Maps')),
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Error al abrir el mapa')));
       }
     }
   }
@@ -324,33 +248,27 @@ Agenda Soka
     if (result != null && context.mounted) {
       final reminderType = result['type'] as ReminderType;
       final reminderTiming = result['timing'] as ReminderTiming;
-      final email = result['email'] as String?;
-      final phone = result['phone'] as String?;
 
       try {
-        // Schedule reminder
         await ReminderService.scheduleReminder(
           event: event,
           type: reminderType,
           timing: reminderTiming,
-          email: email,
-          phoneNumber: phone,
         );
 
-        // Save reminder preferences
         await ReminderPreferencesService.saveReminderSettings(
           eventId: event.id,
           type: reminderType,
           timing: reminderTiming,
         );
 
-        // Wait a frame to ensure modal is fully closed, then show success message
         if (context.mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('Recordatorio guardado correctamente'),
+                  content:
+                      const Text('Recordatorio guardado correctamente'),
                   backgroundColor: AppColors.primary,
                   duration: const Duration(seconds: 2),
                 ),
@@ -359,7 +277,6 @@ Agenda Soka
           });
         }
       } catch (e) {
-        // Wait a frame to ensure modal is fully closed, then show error message
         if (context.mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
@@ -373,33 +290,6 @@ Agenda Soka
             }
           });
         }
-      }
-    }
-  }
-
-  void _openAttachmentLink(BuildContext context, EventAttachment a) async {
-    final String? url =
-        a.fileUrl ??
-        (a.fileId != null
-            ? 'https://drive.google.com/file/d/${a.fileId}/view'
-            : null);
-    if (url == null) return;
-    try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No se puede abrir el adjunto')),
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al abrir el adjunto')),
-        );
       }
     }
   }

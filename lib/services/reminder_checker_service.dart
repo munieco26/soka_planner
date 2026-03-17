@@ -110,9 +110,10 @@ class ReminderCheckerService with WidgetsBindingObserver {
                 ? (reminderData['eventEnd'] as Timestamp).toDate()
                 : null,
             location: reminderData['eventLocation'] as String?,
-            tag: '',
             color: 0xFF2196F3,
-            isTask: reminderData['eventIsTask'] as bool? ?? false,
+            calendarId: reminderData['calendarId'] as String? ?? '',
+            createdBy: '',
+            isAllDay: reminderData['eventIsAllDay'] as bool? ?? false,
           );
 
           // Show notification immediately (not schedule, since time has passed)

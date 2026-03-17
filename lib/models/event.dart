@@ -1,4 +1,4 @@
-import 'event_attachment.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Event {
   final String id;
@@ -7,19 +7,14 @@ class Event {
   final DateTime start;
   final DateTime? end;
   final String? location;
-  final String tag;
   final int color;
   final int? textColor;
-  final bool isTask;
-  final bool completed;
-  final DateTime? due;
-  // Optional month/year coming from Google Sheets rows
-  final int? sheetMonth;
-  final int? sheetYear;
-  // Optional date range for week-type events from Google Sheets
-  final DateTime? from;
-  final DateTime? to;
-  final List<EventAttachment> attachments;
+  final bool isAllDay;
+  final String calendarId;
+  final String createdBy;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final List<String> flyerUrls;
 
   const Event({
     required this.id,
@@ -28,18 +23,59 @@ class Event {
     required this.start,
     this.end,
     this.location,
-    required this.tag,
     required this.color,
     this.textColor,
-    this.isTask = false,
-    this.completed = false,
-    this.due,
-    this.sheetMonth,
-    this.sheetYear,
-    this.from,
-    this.to,
-    this.attachments = const [],
+    this.isAllDay = false,
+    required this.calendarId,
+    required this.createdBy,
+    this.createdAt,
+    this.updatedAt,
+    this.flyerUrls = const [],
   });
+
+  factory Event.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Event(
+      id: doc.id,
+      title: data['title'] as String? ?? '',
+      description: data['description'] as String?,
+      start: (data['start'] as Timestamp).toDate(),
+      end: data['end'] != null ? (data['end'] as Timestamp).toDate() : null,
+      location: data['location'] as String?,
+      color: data['color'] as int? ?? 0xFF2196F3,
+      textColor: data['textColor'] as int?,
+      isAllDay: data['isAllDay'] as bool? ?? false,
+      calendarId: data['calendarId'] as String? ?? '',
+      createdBy: data['createdBy'] as String? ?? '',
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : null,
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : null,
+      flyerUrls: List<String>.from(data['flyerUrls'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'title': title,
+      'description': description,
+      'start': Timestamp.fromDate(start),
+      'end': end != null ? Timestamp.fromDate(end!) : null,
+      'location': location,
+      'color': color,
+      'textColor': textColor,
+      'isAllDay': isAllDay,
+      'calendarId': calendarId,
+      'createdBy': createdBy,
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'flyerUrls': flyerUrls,
+    };
+  }
 
   Event copyWith({
     String? id,
@@ -48,17 +84,14 @@ class Event {
     DateTime? start,
     DateTime? end,
     String? location,
-    String? tag,
     int? color,
     int? textColor,
-    bool? isTask,
-    bool? completed,
-    DateTime? due,
-    int? sheetMonth,
-    int? sheetYear,
-    DateTime? from,
-    DateTime? to,
-    List<EventAttachment>? attachments,
+    bool? isAllDay,
+    String? calendarId,
+    String? createdBy,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<String>? flyerUrls,
   }) {
     return Event(
       id: id ?? this.id,
@@ -67,17 +100,14 @@ class Event {
       start: start ?? this.start,
       end: end ?? this.end,
       location: location ?? this.location,
-      tag: tag ?? this.tag,
       color: color ?? this.color,
       textColor: textColor ?? this.textColor,
-      isTask: isTask ?? this.isTask,
-      completed: completed ?? this.completed,
-      due: due ?? this.due,
-      sheetMonth: sheetMonth ?? this.sheetMonth,
-      sheetYear: sheetYear ?? this.sheetYear,
-      from: from ?? this.from,
-      to: to ?? this.to,
-      attachments: attachments ?? this.attachments,
+      isAllDay: isAllDay ?? this.isAllDay,
+      calendarId: calendarId ?? this.calendarId,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      flyerUrls: flyerUrls ?? this.flyerUrls,
     );
   }
 }

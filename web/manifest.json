@@ -1,11 +1,11 @@
 {
-    "name": "Agenda Soka",
-    "short_name": "Agenda Soka",
+    "name": "Soka Planner",
+    "short_name": "Soka Planner",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#FFFFFF",
-    "description": "A new Flutter project.",
+    "description": "Soka Planner - Calendarios colaborativos",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

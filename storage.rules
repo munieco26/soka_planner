@@ -1,0 +1,10 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /flyers/{calendarId}/{eventId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write, delete: if request.auth != null
+        && firestore.get(/databases/(default)/documents/calendars/$(calendarId)/members/$(request.auth.uid)).data.role in ['owner', 'editor'];
+    }
+  }
+}

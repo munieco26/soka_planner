@@ -11,8 +11,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showViewButton;
   final CalendarViewType? currentViewType;
   final List<Widget>? additionalActions;
-  final VoidCallback? onShowBanner;
-  final bool showBannerIcon;
   final VoidCallback? onMenuTap;
 
   const CustomAppBar({
@@ -25,8 +23,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showViewButton = true,
     this.currentViewType,
     this.additionalActions,
-    this.onShowBanner,
-    this.showBannerIcon = false,
     this.onMenuTap,
   });
 
@@ -67,13 +63,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       actions: [
-        if (showBannerIcon && onShowBanner != null)
-          IconButton(
-            tooltip: 'Mostrar banner',
-            onPressed: onShowBanner,
-            icon: const Icon(Icons.comment),
-          ),
-        // Hide settings and view button on mobile (they're in the drawer)
         if (!mobileScreen && onSettings != null)
           IconButton(
             tooltip: 'Configuración',
@@ -85,112 +74,34 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             tooltip: 'Vista',
             icon: const Icon(Icons.calendar_month),
             onSelected: onChangeView,
-            itemBuilder: (context) => [
-              PopupMenuItem<CalendarViewType>(
-                value: CalendarViewType.day,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: 18,
-                      color: currentViewType == CalendarViewType.day
-                          ? AppColors.primary
-                          : AppColors.black87,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      CalendarViewType.day.displayName,
-                      style: TextStyle(
-                        fontWeight: currentViewType == CalendarViewType.day
-                            ? FontWeight.w700
-                            : FontWeight.normal,
-                        color: currentViewType == CalendarViewType.day
-                            ? AppColors.primary
-                            : AppColors.black87,
+            itemBuilder: (context) => CalendarViewType.values
+                .map((v) => PopupMenuItem<CalendarViewType>(
+                      value: v,
+                      child: Row(
+                        children: [
+                          Icon(
+                            _viewIcon(v),
+                            size: 18,
+                            color: currentViewType == v
+                                ? AppColors.primary
+                                : AppColors.black87,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            v.displayName,
+                            style: TextStyle(
+                              fontWeight: currentViewType == v
+                                  ? FontWeight.w700
+                                  : FontWeight.normal,
+                              color: currentViewType == v
+                                  ? AppColors.primary
+                                  : AppColors.black87,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem<CalendarViewType>(
-                value: CalendarViewType.week,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.view_week,
-                      size: 18,
-                      color: currentViewType == CalendarViewType.week
-                          ? AppColors.primary
-                          : AppColors.black87,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      CalendarViewType.week.displayName,
-                      style: TextStyle(
-                        fontWeight: currentViewType == CalendarViewType.week
-                            ? FontWeight.w700
-                            : FontWeight.normal,
-                        color: currentViewType == CalendarViewType.week
-                            ? AppColors.primary
-                            : AppColors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem<CalendarViewType>(
-                value: CalendarViewType.month,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_month,
-                      size: 18,
-                      color: currentViewType == CalendarViewType.month
-                          ? AppColors.primary
-                          : AppColors.black87,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      CalendarViewType.month.displayName,
-                      style: TextStyle(
-                        fontWeight: currentViewType == CalendarViewType.month
-                            ? FontWeight.w700
-                            : FontWeight.normal,
-                        color: currentViewType == CalendarViewType.month
-                            ? AppColors.primary
-                            : AppColors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem<CalendarViewType>(
-                value: CalendarViewType.year,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.view_module,
-                      size: 18,
-                      color: currentViewType == CalendarViewType.year
-                          ? AppColors.primary
-                          : AppColors.black87,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      CalendarViewType.year.displayName,
-                      style: TextStyle(
-                        fontWeight: currentViewType == CalendarViewType.year
-                            ? FontWeight.w700
-                            : FontWeight.normal,
-                        color: currentViewType == CalendarViewType.year
-                            ? AppColors.primary
-                            : AppColors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                    ))
+                .toList(),
           ),
         if (onNotifications != null)
           Stack(
@@ -233,6 +144,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         if (additionalActions != null) ...additionalActions!,
       ],
     );
+  }
+
+  IconData _viewIcon(CalendarViewType v) {
+    switch (v) {
+      case CalendarViewType.day:
+        return Icons.calendar_today;
+      case CalendarViewType.week:
+        return Icons.view_week;
+      case CalendarViewType.month:
+        return Icons.calendar_month;
+      case CalendarViewType.year:
+        return Icons.view_module;
+    }
   }
 
   @override
