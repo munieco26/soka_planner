@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firestore_reminder_service.dart';
 import 'reminder_service.dart';
 import 'notification_service.dart';
@@ -27,8 +28,8 @@ class ReminderCheckerService with WidgetsBindingObserver {
     // Listen to app lifecycle changes
     WidgetsBinding.instance.addObserver(this);
 
-    // Sync reminders immediately on initialization
-    await _syncReminders();
+    // Don't sync reminders here — auth may not be ready yet.
+    // Reminders will be synced from auth_provider after login.
 
     // Check for due reminders every minute when app is active
     _periodicTimer = Timer.periodic(
@@ -63,6 +64,7 @@ class ReminderCheckerService with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
         // App came to foreground - refresh tokens and sync reminders immediately
+        if (FirebaseAuth.instance.currentUser == null) return;
         print('📱 App resumed - refreshing tokens and syncing reminders');
         // Refresh deviceId first to ensure all reminders have current token
         FirestoreReminderService.refreshDeviceIdForReminders();

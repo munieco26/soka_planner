@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
+import '../services/firestore_reminder_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   User? _user;
@@ -24,6 +25,15 @@ class AuthProvider extends ChangeNotifier {
 
     if (user != null) {
       await _createOrUpdateUserDoc(user);
+
+      // Now that auth is ready, sync reminders from Firestore
+      try {
+        await FirestoreReminderService.refreshDeviceIdForReminders();
+        await FirestoreReminderService.deactivateRemindersWithInvalidTokens();
+        await FirestoreReminderService.syncAndScheduleReminders();
+      } catch (e) {
+        debugPrint('Error syncing reminders after auth: $e');
+      }
     }
 
     notifyListeners();

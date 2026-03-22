@@ -85,13 +85,45 @@ class _EventDetailContent extends StatelessWidget {
               ),
             ),
 
-            // Title
-            Text(
-              event.title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.black87,
-              ),
+            // Title + edit
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.black87,
+                        ),
+                      ),
+                      if (event.isPrivate) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Evento privado · solo quien lo creó puede editarlo o borrarlo',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.black54,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (canEdit)
+                  IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onEdit?.call();
+                    },
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: 'Editar',
+                    color: accent,
+                  ),
+              ],
             ),
             const SizedBox(height: 12),
 
@@ -129,9 +161,9 @@ class _EventDetailContent extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Actions
-            Row(
-              children: [
-                if (_isEventInFuture()) ...[
+            if (_isEventInFuture())
+              Row(
+                children: [
                   Expanded(
                     child: FilledButton.icon(
                       style: FilledButton.styleFrom(
@@ -158,28 +190,26 @@ class _EventDetailContent extends StatelessWidget {
                     ),
                   ),
                 ],
-                if (canEdit) ...[
-                  const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      onEdit?.call();
-                    },
-                    icon: const Icon(Icons.edit_outlined),
-                    tooltip: 'Editar',
+              ),
+            if (canEdit && onDelete != null) ...[
+              if (_isEventInFuture()) const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(color: AppColors.error),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      onDelete?.call();
-                    },
-                    icon:
-                        const Icon(Icons.delete_outline, color: AppColors.error),
-                    tooltip: 'Eliminar',
-                  ),
-                ],
-              ],
-            ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onDelete?.call();
+                  },
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Eliminar evento'),
+                ),
+              ),
+            ],
           ],
         ),
       ),

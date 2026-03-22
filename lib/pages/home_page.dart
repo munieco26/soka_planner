@@ -10,6 +10,8 @@ import '../widgets/calendar_widget.dart';
 import '../widgets/event_detail_sheet.dart';
 import '../widgets/notification_list_modal.dart';
 import '../services/notification_storage_service.dart';
+import '../services/event_service.dart';
+import '../models/event.dart';
 import 'event_form_page.dart';
 import 'calendar_settings_page.dart';
 import 'join_calendar_page.dart';
@@ -83,7 +85,7 @@ class _HomePageState extends State<HomePage> {
       body: calendarProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : _buildBody(calendarProvider),
-      floatingActionButton: calendarProvider.canEdit
+      floatingActionButton: calendarProvider.selectedCalendar != null
           ? FloatingActionButton(
               onPressed: () => _createEvent(context),
               backgroundColor: AppColors.soka,
@@ -109,7 +111,7 @@ class _HomePageState extends State<HomePage> {
               });
             },
             onPageChanged: _onMonthChanged,
-            onEventTap: (event) => EventDetailSheet.show(context, event),
+            onEventTap: (event) => _onEventTap(context, event, provider),
           ),
         ),
       ],
@@ -298,6 +300,80 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  void _onEventTap(
+    BuildContext context,
+    Event event,
+    CalendarProvider calendarProvider,
+  ) {
+    final uid = context.read<AuthProvider>().uid;
+    final canEdit = event.canBeEditedBy(uid);
+
+    EventDetailSheet.show(
+      context,
+      event,
+      canEdit: canEdit,
+      onEdit: canEdit
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EventFormPage(
+                    calendarId: calendarProvider.selectedCalendar!.id,
+                    event: event,
+                  ),
+                ),
+              );
+            }
+          : null,
+      onDelete: canEdit
+          ? () => _confirmDeleteEvent(context, event, calendarProvider)
+          : null,
+    );
+  }
+
+  Future<void> _confirmDeleteEvent(
+    BuildContext context,
+    Event event,
+    CalendarProvider calendarProvider,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar evento'),
+        content: Text('¿Seguro que querés borrar «${event.title}»?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+
+    try {
+      await EventService.deleteEvent(
+        calendarId: calendarProvider.selectedCalendar!.id,
+        eventId: event.id,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Evento eliminado')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo eliminar: $e')),
+        );
+      }
+    }
   }
 
   void _showNotifications(BuildContext context) {

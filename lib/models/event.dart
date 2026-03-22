@@ -12,6 +12,8 @@ class Event {
   final bool isAllDay;
   final String calendarId;
   final String createdBy;
+  /// Solo el creador puede editar si es true; cualquier miembro del calendario si es false.
+  final bool isPrivate;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final List<String> flyerUrls;
@@ -28,6 +30,7 @@ class Event {
     this.isAllDay = false,
     required this.calendarId,
     required this.createdBy,
+    this.isPrivate = false,
     this.createdAt,
     this.updatedAt,
     this.flyerUrls = const [],
@@ -47,6 +50,7 @@ class Event {
       isAllDay: data['isAllDay'] as bool? ?? false,
       calendarId: data['calendarId'] as String? ?? '',
       createdBy: data['createdBy'] as String? ?? '',
+      isPrivate: data['isPrivate'] as bool? ?? false,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : null,
@@ -69,12 +73,20 @@ class Event {
       'isAllDay': isAllDay,
       'calendarId': calendarId,
       'createdBy': createdBy,
+      'isPrivate': isPrivate,
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
       'flyerUrls': flyerUrls,
     };
+  }
+
+  /// Cualquier miembro del calendario puede editar salvo [isPrivate] (solo [createdBy]).
+  bool canBeEditedBy(String? uid) {
+    if (uid == null || uid.isEmpty) return false;
+    if (!isPrivate) return true;
+    return createdBy.isNotEmpty && createdBy == uid;
   }
 
   Event copyWith({
@@ -89,6 +101,7 @@ class Event {
     bool? isAllDay,
     String? calendarId,
     String? createdBy,
+    bool? isPrivate,
     DateTime? createdAt,
     DateTime? updatedAt,
     List<String>? flyerUrls,
@@ -105,6 +118,7 @@ class Event {
       isAllDay: isAllDay ?? this.isAllDay,
       calendarId: calendarId ?? this.calendarId,
       createdBy: createdBy ?? this.createdBy,
+      isPrivate: isPrivate ?? this.isPrivate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       flyerUrls: flyerUrls ?? this.flyerUrls,

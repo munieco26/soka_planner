@@ -51,6 +51,7 @@ class EventService {
     String? location,
     int color = 0xFF2196F3,
     bool isAllDay = false,
+    bool isPrivate = false,
     List<String> flyerUrls = const [],
   }) async {
     final docRef = await _firestore
@@ -67,6 +68,7 @@ class EventService {
       'isAllDay': isAllDay,
       'calendarId': calendarId,
       'createdBy': createdBy,
+      'isPrivate': isPrivate,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
       'flyerUrls': flyerUrls,
@@ -87,6 +89,7 @@ class EventService {
     String? location,
     int? color,
     bool? isAllDay,
+    bool? isPrivate,
     List<String>? flyerUrls,
   }) async {
     final updates = <String, dynamic>{
@@ -100,6 +103,7 @@ class EventService {
     if (location != null) updates['location'] = location;
     if (color != null) updates['color'] = color;
     if (isAllDay != null) updates['isAllDay'] = isAllDay;
+    if (isPrivate != null) updates['isPrivate'] = isPrivate;
     if (flyerUrls != null) updates['flyerUrls'] = flyerUrls;
 
     await _firestore

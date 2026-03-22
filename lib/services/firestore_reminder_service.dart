@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,9 @@ class FirestoreReminderService {
   static const String _collection = 'reminders';
   static const String _deviceIdKey = 'firestore_device_id';
   static const _uuid = Uuid();
+
+  /// Safe accessor for current user's UID — returns null if not authenticated
+  static String? get _currentUid => FirebaseAuth.instance.currentUser?.uid;
 
   /// Get deviceId - FCM token for mobile, stored UUID for web
   static Future<String?> _getDeviceId() async {
@@ -47,6 +51,12 @@ class FirestoreReminderService {
     required ReminderTiming timing,
     required DateTime reminderTime,
   }) async {
+    final uid = _currentUid;
+    if (uid == null) {
+      print('⚠️ Cannot save reminder: User not authenticated');
+      return;
+    }
+
     try {
       final deviceId = await _getDeviceId();
       if (deviceId == null) {
@@ -62,6 +72,7 @@ class FirestoreReminderService {
 
       // Create reminder document
       final reminderData = {
+        'userId': uid,
         'deviceId': deviceId,
         'eventId': event.id,
         'eventTitle': event.title,
@@ -116,12 +127,19 @@ class FirestoreReminderService {
     required String oldDeviceId,
     required String newDeviceId,
   }) async {
+    final uid = _currentUid;
+    if (uid == null) {
+      print('⚠️ Cannot update deviceId: User not authenticated');
+      return;
+    }
+
     try {
       print('🔄 Updating deviceId from $oldDeviceId to $newDeviceId');
 
       // Find all active reminders with old deviceId
       final snapshot = await _firestore
           .collection(_collection)
+          .where('userId', isEqualTo: uid)
           .where('deviceId', isEqualTo: oldDeviceId)
           .where('isActive', isEqualTo: true)
           .get();
@@ -146,6 +164,12 @@ class FirestoreReminderService {
 
   /// Get all active reminders for current device
   static Future<List<Map<String, dynamic>>> getActiveReminders() async {
+    final uid = _currentUid;
+    if (uid == null) {
+      print('⚠️ Cannot get reminders: User not authenticated');
+      return [];
+    }
+
     try {
       final deviceId = await _getDeviceId();
       if (deviceId == null) {
@@ -157,6 +181,7 @@ class FirestoreReminderService {
       // We'll sort in memory instead
       final snapshot = await _firestore
           .collection(_collection)
+          .where('userId', isEqualTo: uid)
           .where('deviceId', isEqualTo: deviceId)
           .where('isActive', isEqualTo: true)
           .get();
@@ -185,6 +210,12 @@ class FirestoreReminderService {
 
   /// Cancel a reminder (mark as inactive)
   static Future<void> cancelReminder({required String eventId}) async {
+    final uid = _currentUid;
+    if (uid == null) {
+      print('⚠️ Cannot cancel reminder: User not authenticated');
+      return;
+    }
+
     try {
       final deviceId = await _getDeviceId();
       if (deviceId == null) {
@@ -195,6 +226,7 @@ class FirestoreReminderService {
       // Find and deactivate all reminders for this event on this device
       final snapshot = await _firestore
           .collection(_collection)
+          .where('userId', isEqualTo: uid)
           .where('deviceId', isEqualTo: deviceId)
           .where('eventId', isEqualTo: eventId)
           .where('isActive', isEqualTo: true)
@@ -215,6 +247,12 @@ class FirestoreReminderService {
 
   /// Delete old/inactive reminders (cleanup)
   static Future<void> deleteOldReminders({int daysOld = 30}) async {
+    final uid = _currentUid;
+    if (uid == null) {
+      print('⚠️ Cannot delete old reminders: User not authenticated');
+      return;
+    }
+
     try {
       final deviceId = await _getDeviceId();
       if (deviceId == null) return;
@@ -222,6 +260,7 @@ class FirestoreReminderService {
       final cutoffDate = DateTime.now().subtract(Duration(days: daysOld));
       final snapshot = await _firestore
           .collection(_collection)
+          .where('userId', isEqualTo: uid)
           .where('deviceId', isEqualTo: deviceId)
           .where('isActive', isEqualTo: false)
           .where('reminderTime', isLessThan: Timestamp.fromDate(cutoffDate))
@@ -254,6 +293,12 @@ class FirestoreReminderService {
   /// This updates reminders that belong to the current device to use the current FCM token
   /// Strategy: Get reminders with current token OR get all and update those that need it
   static Future<void> refreshDeviceIdForReminders() async {
+    final uid = _currentUid;
+    if (uid == null) {
+      print('⚠️ Cannot refresh deviceId: User not authenticated');
+      return;
+    }
+
     try {
       // Always get a fresh token
       final currentToken = await FirebaseMessaging.instance.getToken();
@@ -269,6 +314,7 @@ class FirestoreReminderService {
       // Strategy 1: Get reminders that already have current token (these are fine)
       final currentTokenSnapshot = await _firestore
           .collection(_collection)
+          .where('userId', isEqualTo: uid)
           .where('deviceId', isEqualTo: currentToken)
           .where('isActive', isEqualTo: true)
           .get();
@@ -282,6 +328,7 @@ class FirestoreReminderService {
       // Note: This might include reminders from other devices, but we'll be conservative
       final allActiveSnapshot = await _firestore
           .collection(_collection)
+          .where('userId', isEqualTo: uid)
           .where('isActive', isEqualTo: true)
           .get();
 
@@ -328,6 +375,12 @@ class FirestoreReminderService {
   /// Clean up reminders with invalid tokens by marking them inactive
   /// This is a safety measure if tokens can't be updated
   static Future<void> deactivateRemindersWithInvalidTokens() async {
+    final uid = _currentUid;
+    if (uid == null) {
+      print('⚠️ Cannot deactivate reminders: User not authenticated');
+      return;
+    }
+
     try {
       final currentToken = await getCurrentFCMToken();
       if (currentToken == null) {
@@ -335,9 +388,10 @@ class FirestoreReminderService {
         return;
       }
 
-      // Get all active reminders
+      // Get all active reminders for current user
       final snapshot = await _firestore
           .collection(_collection)
+          .where('userId', isEqualTo: uid)
           .where('isActive', isEqualTo: true)
           .get();
 

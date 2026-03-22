@@ -37,8 +37,12 @@ class _EventFormPageState extends State<EventFormPage> {
   List<XFile> _newImages = [];
   List<String> _existingFlyerUrls = [];
   bool _isSaving = false;
+  bool _isPrivate = false;
 
   bool get _isEditing => widget.event != null;
+
+  bool _canChangePrivateFlag(String uid) =>
+      !_isEditing || widget.event!.createdBy == uid;
 
   @override
   void initState() {
@@ -52,6 +56,7 @@ class _EventFormPageState extends State<EventFormPage> {
       _isAllDay = e.isAllDay;
       _selectedColor = e.color;
       _existingFlyerUrls = List.from(e.flyerUrls);
+      _isPrivate = e.isPrivate;
       if (!e.isAllDay) {
         _startTime = TimeOfDay.fromDateTime(e.start);
         if (e.end != null) {
@@ -128,6 +133,28 @@ class _EventFormPageState extends State<EventFormPage> {
               value: _isAllDay,
               onChanged: (v) => setState(() => _isAllDay = v),
               contentPadding: EdgeInsets.zero,
+            ),
+
+            // Private: solo el creador puede cambiar este valor al editar
+            Builder(
+              builder: (context) {
+                final uid = context.read<AuthProvider>().uid ?? '';
+                final canChange = _canChangePrivateFlag(uid);
+                return SwitchListTile(
+                  title: const Text('Evento privado'),
+                  subtitle: Text(
+                    canChange
+                        ? 'Solo vos podés editarlo o borrarlo'
+                        : 'Solo el creador puede cambiar esta opción',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  value: _isPrivate,
+                  onChanged: canChange
+                      ? (v) => setState(() => _isPrivate = v)
+                      : null,
+                  contentPadding: EdgeInsets.zero,
+                );
+              },
             ),
 
             // Date
@@ -280,6 +307,7 @@ class _EventFormPageState extends State<EventFormPage> {
               : null,
           color: _selectedColor,
           isAllDay: _isAllDay,
+          isPrivate: _canChangePrivateFlag(uid) ? _isPrivate : null,
           flyerUrls: allFlyerUrls,
         );
       } else {
@@ -297,6 +325,7 @@ class _EventFormPageState extends State<EventFormPage> {
               : null,
           color: _selectedColor,
           isAllDay: _isAllDay,
+          isPrivate: _isPrivate,
           flyerUrls: allFlyerUrls,
         );
       }

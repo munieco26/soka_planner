@@ -9,7 +9,6 @@ import 'providers/auth_provider.dart';
 import 'providers/calendar_provider.dart';
 import 'services/reminder_service.dart';
 import 'services/firebase_messaging_service.dart';
-import 'services/firestore_reminder_service.dart';
 import 'services/reminder_checker_service.dart';
 import 'pages/login_page.dart';
 import 'pages/onboarding_page.dart';
@@ -38,22 +37,9 @@ void main() async {
   // Initialize Reminder Service (timezone)
   await ReminderService.initialize();
 
-  // Initialize Firebase Messaging
+  // Initialize Firebase Messaging (permission + token only, no Firestore calls)
   try {
     await FirebaseMessagingService.initialize();
-
-    try {
-      await FirestoreReminderService.refreshDeviceIdForReminders();
-      await FirestoreReminderService.deactivateRemindersWithInvalidTokens();
-    } catch (e) {
-      debugPrint('Error refreshing deviceId for reminders: $e');
-    }
-
-    try {
-      await FirestoreReminderService.syncAndScheduleReminders();
-    } catch (e) {
-      debugPrint('Error syncing reminders from Firestore: $e');
-    }
   } catch (e) {
     debugPrint('Firebase Messaging initialization error: $e');
   }
