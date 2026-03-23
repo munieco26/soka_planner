@@ -74,9 +74,6 @@ class _NotificationListModalState extends State<NotificationListModal> {
         id: 999999,
       );
 
-      // Reload notifications to show the test one
-      await _loadNotifications();
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

@@ -74,6 +74,7 @@ class FirestoreReminderService {
       final reminderData = {
         'userId': uid,
         'deviceId': deviceId,
+        'calendarId': event.calendarId,
         'eventId': event.id,
         'eventTitle': event.title,
         'eventDescription': event.description,

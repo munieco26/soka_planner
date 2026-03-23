@@ -62,12 +62,12 @@ class DefaultFirebaseOptions {
 
   // TODO: Replace with output of `flutterfire configure` for project soka-planner
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
+    apiKey: 'AIzaSyACie_9C1lrNTPqyBoUeoEr2KBE-hqIquM',
     authDomain: 'soka-planner.firebaseapp.com',
     projectId: 'soka-planner',
     storageBucket: 'soka-planner.firebasestorage.app',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    appId: 'YOUR_ANDROID_APP_ID',
-    measurementId: 'YOUR_MEASUREMENT_ID',
+    messagingSenderId: '777301808825',
+    appId: '1:777301808825:android:4f0d3cb32f74866fbf2d68',
+    measurementId: 'G-YMRQ0LVSLQ',
   );
 }

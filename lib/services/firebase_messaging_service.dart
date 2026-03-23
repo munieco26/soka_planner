@@ -3,9 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
-import 'notification_storage_service.dart';
 import 'firestore_reminder_service.dart';
-import '../models/notification_item.dart';
 
 class FirebaseMessagingService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -123,44 +121,17 @@ class FirebaseMessagingService {
     print('📬 Foreground message: ${message.messageId}');
 
     // Show local notification
+    final eid = message.data['eventId']?.toString();
     await NotificationService.showNotification(
       title: message.notification?.title ?? 'Nueva notificación',
       body: message.notification?.body ?? '',
       id: message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch,
-      eventId: message.data['eventId'] != null
-          ? int.tryParse(message.data['eventId'].toString())
-          : null,
+      eventId: eid != null && eid.isNotEmpty ? eid : null,
     );
-
-    // Save to storage
-    final notification = NotificationItem(
-      id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      title: message.notification?.title ?? 'Nueva notificación',
-      body: message.notification?.body ?? '',
-      receivedAt: DateTime.now(),
-      isRead: false,
-      eventId: message.data['eventId'] != null
-          ? int.tryParse(message.data['eventId'].toString())
-          : null,
-    );
-    await NotificationStorageService.addNotification(notification);
   }
 
   static Future<void> _handleBackgroundMessage(RemoteMessage message) async {
     print('📬 Background message opened app: ${message.messageId}');
-
-    // Save notification to storage
-    final notification = NotificationItem(
-      id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      title: message.notification?.title ?? 'Nueva notificación',
-      body: message.notification?.body ?? '',
-      receivedAt: DateTime.now(),
-      isRead: false,
-      eventId: message.data['eventId'] != null
-          ? int.tryParse(message.data['eventId'].toString())
-          : null,
-    );
-    await NotificationStorageService.addNotification(notification);
 
     // Handle navigation or other actions when notification is tapped
     // You can navigate to a specific page based on message.data
@@ -173,26 +144,5 @@ class FirebaseMessagingService {
     RemoteMessage message,
   ) async {
     print('📬 Handling background message: ${message.messageId}');
-
-    // Save notification to storage
-    // Note: This runs in an isolate, so we need to ensure SharedPreferences is initialized
-    try {
-      final notification = NotificationItem(
-        id:
-            message.messageId ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        title: message.notification?.title ?? 'Nueva notificación',
-        body: message.notification?.body ?? '',
-        receivedAt: DateTime.now(),
-        isRead: false,
-        eventId: message.data['eventId'] != null
-            ? int.tryParse(message.data['eventId'].toString())
-            : null,
-      );
-      await NotificationStorageService.addNotification(notification);
-      print('✅ Background notification saved to storage');
-    } catch (e) {
-      print('❌ Error saving background notification: $e');
-    }
   }
 }

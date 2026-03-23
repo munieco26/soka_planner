@@ -123,7 +123,7 @@ class ReminderCheckerService with WidgetsBindingObserver {
             title: 'Recordatorio: ${event.title}',
             body: ReminderService.buildReminderBody(event),
             id: event.id.hashCode,
-            eventId: event.id.hashCode,
+            eventId: event.id,
           );
           print('⏰ Showing missed reminder for event: ${event.id}');
 

@@ -8,6 +8,17 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
     }
+
+    // Bandeja in-app: solo el backend (Admin SDK) crea; el usuario lee/actualiza/borra lo suyo
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if false;
+    }
+
     match /calendars/{calendarId} {
       allow read: if request.auth != null && request.auth.uid in resource.data.memberUids;
       allow create: if request.auth != null;
@@ -24,13 +35,10 @@ service cloud.firestore {
         allow read: if request.auth != null
           && request.auth.uid in get(/databases/$(database)/documents/calendars/$(calendarId)).data.memberUids;
 
-        // Create: any calendar member; must attribute event to self
         allow create: if request.auth != null
           && request.auth.uid in get(/databases/$(database)/documents/calendars/$(calendarId)).data.memberUids
           && request.resource.data.createdBy == request.auth.uid;
 
-        // Update/delete: any member unless event is private (only creator then).
-        // createdBy is immutable. Only creator may change isPrivate.
         allow update: if request.auth != null
           && request.auth.uid in get(/databases/$(database)/documents/calendars/$(calendarId)).data.memberUids
           && (
@@ -59,10 +67,12 @@ service cloud.firestore {
       allow write, delete: if request.auth != null
         && firestore.get(/databases/(default)/documents/calendars/$(calendarId)/members/$(request.auth.uid)).data.role in ['owner', 'editor'];
     }
-    
+
     match /reminders/{reminderId} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
     }
   }
 }

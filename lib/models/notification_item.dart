@@ -1,10 +1,15 @@
+/// Entrada de bandeja (Firestore `notifications` + datos en FCM).
 class NotificationItem {
   final String id;
   final String title;
   final String body;
   final DateTime receivedAt;
   final bool isRead;
-  final int? eventId; // Optional: link to an event
+  /// Tipo lógico: `member_joined`, `event_created`, etc.
+  final String? type;
+  final String? calendarId;
+  /// ID del documento del evento en Firestore (string).
+  final String? eventId;
 
   NotificationItem({
     required this.id,
@@ -12,6 +17,8 @@ class NotificationItem {
     required this.body,
     required this.receivedAt,
     this.isRead = false,
+    this.type,
+    this.calendarId,
     this.eventId,
   });
 
@@ -21,7 +28,9 @@ class NotificationItem {
     String? body,
     DateTime? receivedAt,
     bool? isRead,
-    int? eventId,
+    String? type,
+    String? calendarId,
+    String? eventId,
   }) {
     return NotificationItem(
       id: id ?? this.id,
@@ -29,6 +38,8 @@ class NotificationItem {
       body: body ?? this.body,
       receivedAt: receivedAt ?? this.receivedAt,
       isRead: isRead ?? this.isRead,
+      type: type ?? this.type,
+      calendarId: calendarId ?? this.calendarId,
       eventId: eventId ?? this.eventId,
     );
   }
@@ -40,6 +51,8 @@ class NotificationItem {
       'body': body,
       'receivedAt': receivedAt.toIso8601String(),
       'isRead': isRead,
+      'type': type,
+      'calendarId': calendarId,
       'eventId': eventId,
     };
   }
@@ -51,7 +64,16 @@ class NotificationItem {
       body: json['body'] as String,
       receivedAt: DateTime.parse(json['receivedAt'] as String),
       isRead: json['isRead'] as bool? ?? false,
-      eventId: json['eventId'] as int?,
+      type: json['type'] as String?,
+      calendarId: json['calendarId'] as String?,
+      eventId: _parseEventId(json['eventId']),
     );
+  }
+
+  static String? _parseEventId(dynamic v) {
+    if (v == null) return null;
+    if (v is String) return v;
+    if (v is int) return v.toString();
+    return v.toString();
   }
 }

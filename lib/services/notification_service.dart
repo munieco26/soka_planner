@@ -1,7 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:ui';
-import '../models/notification_item.dart';
-import 'notification_storage_service.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
@@ -40,7 +38,7 @@ class NotificationService {
     required String title,
     required String body,
     int id = 0,
-    int? eventId,
+    String? eventId,
   }) async {
     final androidDetails = AndroidNotificationDetails(
       'soka_planner_channel',
@@ -64,17 +62,7 @@ class NotificationService {
     );
 
     await _notifications.show(id, title, body, details);
-
-    // Save notification to storage
-    final notification = NotificationItem(
-      id: 'notification_$id',
-      title: title,
-      body: body,
-      receivedAt: DateTime.now(),
-      isRead: false,
-      eventId: eventId,
-    );
-    await NotificationStorageService.addNotification(notification);
+    // La bandeja in-app la puebla Firestore (Cloud Functions); no duplicar aquí.
   }
 
   /// Schedule a notification for an event

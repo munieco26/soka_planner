@@ -2,8 +2,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'dart:ui';
 import '../models/event.dart';
-import 'notification_storage_service.dart';
-import '../models/notification_item.dart';
 import 'firestore_reminder_service.dart';
 
 enum ReminderType {
@@ -163,17 +161,6 @@ class ReminderService {
           rethrow;
         }
       }
-
-      // Save reminder notification to storage
-      final notification = NotificationItem(
-        id: 'reminder_${event.id}_${reminderTime.millisecondsSinceEpoch}',
-        title: 'Recordatorio: ${event.title}',
-        body: buildReminderBody(event),
-        receivedAt: DateTime.now(),
-        isRead: false,
-        eventId: event.id.hashCode,
-      );
-      await NotificationStorageService.addNotification(notification);
     } catch (e) {
       print('Error scheduling notification: $e');
     }
