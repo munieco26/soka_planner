@@ -46,6 +46,7 @@ app.*.map.json
 
 # Firebase / Cloud Functions
 .firebase/
+/node_modules/
 functions/node_modules/
 firebase-debug.log
 firebase-debug.*.log

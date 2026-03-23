@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/event.dart';
 import '../utils/globals.dart';
 import '../services/reminder_service.dart';
@@ -161,9 +163,22 @@ class _EventDetailContent extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Actions
-            if (_isEventInFuture())
+            if (_isEventInFuture()) ...[
               Row(
                 children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () => _shareViaWhatsApp(context),
+                      icon: const FaIcon(FontAwesomeIcons.whatsapp, size: 20),
+                      label: const Text('WhatsApp'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton.icon(
                       style: FilledButton.styleFrom(
@@ -176,21 +191,23 @@ class _EventDetailContent extends StatelessWidget {
                       label: const Text('Compartir'),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: accent.withOpacity(0.6)),
-                        foregroundColor: accent,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () => _showReminderDialog(context),
-                      icon: const Icon(Icons.notifications_outlined),
-                      label: const Text('Recordar'),
-                    ),
-                  ),
                 ],
               ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: accent.withOpacity(0.6)),
+                    foregroundColor: accent,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () => _showReminderDialog(context),
+                  icon: const Icon(Icons.notifications_outlined),
+                  label: const Text('Recordar'),
+                ),
+              ),
+            ],
             if (canEdit && onDelete != null) ...[
               if (_isEventInFuture()) const SizedBox(height: 12),
               SizedBox(
@@ -241,6 +258,53 @@ class _EventDetailContent extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _shareViaWhatsApp(BuildContext context) async {
+    if (!context.mounted) return;
+    try {
+      final df = DateFormat('EEEE d MMMM yyyy • HH:mm', 'es_AR');
+      final parts = <String>[
+        '*${event.title}*',
+        '',
+        df.format(event.start),
+      ];
+
+      if (event.location != null && event.location!.isNotEmpty) {
+        parts.add(event.location!);
+      }
+      if (event.description != null && event.description!.isNotEmpty) {
+        parts.add('');
+        parts.add(event.description!);
+      }
+      if (event.flyerUrls.isNotEmpty) {
+        parts.add('');
+        for (final url in event.flyerUrls) {
+          parts.add(url);
+        }
+      }
+      parts.addAll(['', 'Soka Planner']);
+
+      final text = parts.join('\n').trim();
+      final encoded = Uri.encodeComponent(text);
+      final url = Uri.parse('https://wa.me/?text=$encoded');
+
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se pudo abrir WhatsApp')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al compartir: $e')),
+        );
+      }
+    }
   }
 
   void _shareEvent(BuildContext context) async {

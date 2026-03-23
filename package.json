@@ -1,0 +1,16 @@
+{
+  "name": "soka-planner",
+  "private": true,
+  "description": "Scripts para desplegar reglas Firebase desde la raíz del repo Flutter",
+  "scripts": {
+    "deploy:firestore-rules": "firebase deploy --only firestore:rules",
+    "deploy:firestore-indexes": "firebase deploy --only firestore:indexes",
+    "deploy:firestore": "firebase deploy --only firestore:rules,firestore:indexes",
+    "deploy:storage-rules": "firebase deploy --only storage",
+    "deploy:rules": "firebase deploy --only firestore:rules,storage",
+    "deploy:rules-all": "firebase deploy --only firestore:rules,firestore:indexes,storage"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.29.0"
+  }
+}

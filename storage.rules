@@ -1,10 +1,18 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+
+    function isCalendarMember(calendarId) {
+      return request.auth != null
+        && request.auth.uid in firestore.get(
+          /databases/(default)/documents/calendars/$(calendarId)
+        ).data.memberUids;
+    }
+
+    // Cualquier miembro del calendario (owner / editor / viewer) puede leer y subir flyers.
     match /flyers/{calendarId}/{eventId}/{fileName} {
-      allow read: if request.auth != null;
-      allow write, delete: if request.auth != null
-        && firestore.get(/databases/(default)/documents/calendars/$(calendarId)/members/$(request.auth.uid)).data.role in ['owner', 'editor'];
+      allow read: if isCalendarMember(calendarId);
+      allow write, delete: if isCalendarMember(calendarId);
     }
   }
 }

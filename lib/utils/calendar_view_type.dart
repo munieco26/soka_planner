@@ -7,13 +7,13 @@ enum CalendarViewType {
   String get displayName {
     switch (this) {
       case CalendarViewType.day:
-        return 'Día';
+        return 'D';
       case CalendarViewType.week:
-        return 'Semana';
+        return 'S';
       case CalendarViewType.month:
-        return 'Mes';
+        return 'M';
       case CalendarViewType.year:
-        return 'Año';
+        return 'A';
     }
   }
 }
