@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "777301808825-3nkruvbv10ojp0hkcck1apfml3kbdfiv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mmlab.sokaplanner",
+            "certificate_hash": "915ad8a7d7d83c4c7cae18a1de559355c978e977"
+          }
+        },
+        {
+          "client_id": "777301808825-e8kih9u7j6cag6adiposi2klt2m81gff.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mmlab.sokaplanner",
+            "certificate_hash": "39b3fcacce90738d1aec82fc3709efea8d68f889"
+          }
+        },
+        {
           "client_id": "777301808825-pj376vtnd093h0neveoa4mub98gprkv7.apps.googleusercontent.com",
           "client_type": 3
         }
