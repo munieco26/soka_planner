@@ -7,6 +7,7 @@ import '../services/event_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/color_picker_widget.dart';
 import '../widgets/flyer_picker_widget.dart';
+import '../widgets/place_autocomplete_field.dart';
 import 'package:image_picker/image_picker.dart';
 
 class EventFormPage extends StatefulWidget {
@@ -180,16 +181,9 @@ class _EventFormPageState extends State<EventFormPage> {
               ),
             ],
 
-            // Location
-            TextFormField(
+            // Location (Places vía Cloud Functions; mismo flujo web y móvil)
+            PlaceAutocompleteField(
               controller: _locationController,
-              decoration: InputDecoration(
-                labelText: 'Ubicación (opcional)',
-                prefixIcon: const Icon(Icons.location_on_outlined),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
             ),
             const SizedBox(height: 16),
 

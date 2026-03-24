@@ -1,6 +1,8 @@
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 const { initializeApp } = require("firebase-admin/app");
 const {
   getFirestore,
@@ -11,6 +13,9 @@ const { getMessaging } = require("firebase-admin/messaging");
 
 initializeApp();
 const db = getFirestore();
+
+/** Google Places API (New) — crear secreto: firebase functions:secrets:set PLACES_API_KEY */
+const placesApiKey = defineSecret("PLACES_API_KEY");
 
 /** @param {string} uid */
 async function getFcmTokensForUser(uid) {
@@ -211,5 +216,110 @@ exports.processDueReminders = onSchedule(
         console.error("Reminder FCM error", doc.id, e.message);
       }
     }
+  }
+);
+
+// --- Places API (New): autocompletado vía servidor (web sin CORS, misma API en móvil) ---
+
+exports.placesAutocomplete = onCall(
+  {
+    region: "us-central1",
+    secrets: [placesApiKey],
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+    }
+    const input = String(request.data?.input || "").trim();
+    if (input.length < 2) {
+      return { suggestions: [] };
+    }
+    const sessionToken = request.data?.sessionToken;
+    const key = placesApiKey.value();
+
+    const body = {
+      input,
+      languageCode: "es",
+      includedRegionCodes: ["ar"],
+    };
+    if (sessionToken) {
+      body.sessionToken = sessionToken;
+    }
+
+    const res = await fetch(
+      "https://places.googleapis.com/v1/places:autocomplete",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": key,
+          "X-Goog-FieldMask":
+            "suggestions.placePrediction.placeId,suggestions.placePrediction.text",
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("placesAutocomplete HTTP", res.status, errText);
+      throw new HttpsError(
+        "internal",
+        "No se pudo buscar direcciones. Revisá PLACES_API_KEY y la API habilitada."
+      );
+    }
+
+    const data = await res.json();
+    const suggestions = [];
+    for (const s of data.suggestions || []) {
+      const p = s.placePrediction;
+      if (!p) continue;
+      const placeId = p.placeId || "";
+      const text = p.text?.text || "";
+      if (placeId && text) {
+        suggestions.push({ placeId, primaryText: text });
+      }
+    }
+    return { suggestions };
+  }
+);
+
+exports.placesGetDetails = onCall(
+  {
+    region: "us-central1",
+    secrets: [placesApiKey],
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+    }
+    const placeId = String(request.data?.placeId || "").trim();
+    if (!placeId) {
+      throw new HttpsError("invalid-argument", "placeId requerido.");
+    }
+    const key = placesApiKey.value();
+    const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": "formattedAddress,displayName",
+      },
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("placesGetDetails HTTP", res.status, errText);
+      throw new HttpsError("internal", "No se pudo obtener la dirección.");
+    }
+
+    const place = await res.json();
+    const formattedAddress =
+      place.formattedAddress ||
+      place.displayName?.text ||
+      place.displayName ||
+      "";
+    return { formattedAddress: String(formattedAddress) };
   }
 );
