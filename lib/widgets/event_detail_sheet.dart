@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/event.dart';
 import '../utils/globals.dart';
 import '../services/reminder_service.dart';
@@ -13,36 +11,28 @@ import 'flyer_gallery_widget.dart';
 class EventDetailSheet {
   static void show(BuildContext context, Event event,
       {bool canEdit = false, VoidCallback? onEdit, VoidCallback? onDelete}) {
-    final df = event.isAllDay
-        ? DateFormat('EEEE d MMMM yyyy', 'es_AR')
-        : DateFormat('EEEE d MMMM • HH:mm', 'es_AR');
-
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: false,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _EventDetailContent(
-        event: event,
-        dateFormat: df,
-        canEdit: canEdit,
-        onEdit: onEdit,
-        onDelete: onDelete,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _EventDetailPage(
+          event: event,
+          canEdit: canEdit,
+          onEdit: onEdit,
+          onDelete: onDelete,
+        ),
       ),
     );
   }
 }
 
-class _EventDetailContent extends StatelessWidget {
+class _EventDetailPage extends StatelessWidget {
   final Event event;
-  final DateFormat dateFormat;
   final bool canEdit;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
-  const _EventDetailContent({
+  const _EventDetailPage({
     required this.event,
-    required this.dateFormat,
     this.canEdit = false,
     this.onEdit,
     this.onDelete,
@@ -51,90 +41,72 @@ class _EventDetailContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bgColor = AppColors.secondary;
     final accent = AppColors.primary;
+    final df = event.isAllDay
+        ? DateFormat('EEEE d MMMM yyyy', 'es_AR')
+        : DateFormat('EEEE d MMMM • HH:mm', 'es_AR');
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withOpacity(0.1),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
+    return Scaffold(
+      backgroundColor: AppColors.secondary,
+      appBar: AppBar(
+        title: const Text('Detalle'),
+        backgroundColor: AppColors.secondary,
+        foregroundColor: AppColors.black87,
+        elevation: 0,
+        actions: [
+          if (canEdit && onDelete != null)
+            IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+                onDelete?.call();
+              },
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Eliminar',
+              color: AppColors.error,
             ),
-          ],
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          if (canEdit && onEdit != null)
+            IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+                onEdit?.call();
+              },
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Editar',
+              color: accent,
+            ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.black54,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+            // Title
+            Text(
+              event.title,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: AppColors.black87,
               ),
             ),
-
-            // Title + edit
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        event.title,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.black87,
-                        ),
-                      ),
-                      if (event.isPrivate) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          'Evento privado · solo quien lo creó puede editarlo o borrarlo',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.black54,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+            if (event.isPrivate) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Evento privado · solo quien lo creó puede editarlo o borrarlo',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.black54,
+                  fontStyle: FontStyle.italic,
                 ),
-                if (canEdit)
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      onEdit?.call();
-                    },
-                    icon: const Icon(Icons.edit_outlined),
-                    tooltip: 'Editar',
-                    color: accent,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
+              ),
+            ],
+            const SizedBox(height: 16),
 
             // Date/time
             _buildInfoRow(
               Icons.schedule,
               event.isAllDay
-                  ? 'Todo el día - ${dateFormat.format(event.start)}'
-                  : dateFormat.format(event.start),
+                  ? 'Todo el día - ${df.format(event.start)}'
+                  : df.format(event.start),
               accent,
             ),
 
@@ -160,39 +132,24 @@ class _EventDetailContent extends StatelessWidget {
               FlyerGalleryWidget(flyerUrls: event.flyerUrls),
             ],
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Actions
-            if (_isEventInFuture()) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366),
-                        foregroundColor: AppColors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () => _shareViaWhatsApp(context),
-                      icon: const FaIcon(FontAwesomeIcons.whatsapp, size: 20),
-                      label: const Text('WhatsApp'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: accent,
-                        foregroundColor: AppColors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () => _shareEvent(context),
-                      icon: const Icon(Icons.ios_share),
-                      label: const Text('Compartir'),
-                    ),
-                  ),
-                ],
+            // Compartir — siempre visible
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: AppColors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () => _shareEvent(context),
+                icon: const Icon(Icons.ios_share),
+                label: const Text('Compartir'),
               ),
+            ),
+            // Recordar — solo eventos futuros
+            if (_isEventInFuture()) ...[
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
@@ -205,25 +162,6 @@ class _EventDetailContent extends StatelessWidget {
                   onPressed: () => _showReminderDialog(context),
                   icon: const Icon(Icons.notifications_outlined),
                   label: const Text('Recordar'),
-                ),
-              ),
-            ],
-            if (canEdit && onDelete != null) ...[
-              if (_isEventInFuture()) const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    side: const BorderSide(color: AppColors.error),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    onDelete?.call();
-                  },
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Eliminar evento'),
                 ),
               ),
             ],
@@ -258,53 +196,6 @@ class _EventDetailContent extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _shareViaWhatsApp(BuildContext context) async {
-    if (!context.mounted) return;
-    try {
-      final df = DateFormat('EEEE d MMMM yyyy • HH:mm', 'es_AR');
-      final parts = <String>[
-        '*${event.title}*',
-        '',
-        df.format(event.start),
-      ];
-
-      if (event.location != null && event.location!.isNotEmpty) {
-        parts.add(event.location!);
-      }
-      if (event.description != null && event.description!.isNotEmpty) {
-        parts.add('');
-        parts.add(event.description!);
-      }
-      if (event.flyerUrls.isNotEmpty) {
-        parts.add('');
-        for (final url in event.flyerUrls) {
-          parts.add(url);
-        }
-      }
-      parts.addAll(['', 'Soka Planner']);
-
-      final text = parts.join('\n').trim();
-      final encoded = Uri.encodeComponent(text);
-      final url = Uri.parse('https://wa.me/?text=$encoded');
-
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No se pudo abrir WhatsApp')),
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al compartir: $e')),
-        );
-      }
-    }
   }
 
   void _shareEvent(BuildContext context) async {
