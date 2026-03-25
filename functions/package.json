@@ -3,7 +3,7 @@
   "description": "Cloud Functions — FCM, inbox, reminders",
   "main": "index.js",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "scripts": {
     "deploy": "firebase deploy --only functions",
