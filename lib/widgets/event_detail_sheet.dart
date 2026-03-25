@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/event.dart';
 import '../utils/globals.dart';
 import '../services/reminder_service.dart';
@@ -112,7 +113,10 @@ class _EventDetailPage extends StatelessWidget {
 
             // Location
             if (event.location?.isNotEmpty == true)
-              _buildInfoRow(Icons.place, event.location!, accent),
+              GestureDetector(
+                onTap: () => _openInMaps(event.location!),
+                child: _buildInfoRow(Icons.place, event.location!, accent),
+              ),
 
             // Flyer gallery
             if (event.flyerUrls.isNotEmpty) ...[
@@ -186,15 +190,27 @@ class _EventDetailPage extends StatelessWidget {
     );
   }
 
+  void _openInMaps(String location) {
+    final url = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(location)}',
+    );
+    launchUrl(url, mode: LaunchMode.externalApplication);
+  }
+
   void _shareEvent(BuildContext context) async {
     if (!context.mounted) return;
     try {
       final df = DateFormat('EEEE d MMMM yyyy • HH:mm', 'es_AR');
+      final hasLocation =
+          event.location != null && event.location!.isNotEmpty;
+      final mapsUrl = hasLocation
+          ? 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(event.location!)}'
+          : null;
       final text = '''
 ${event.title}
 
 ${df.format(event.start)}
-${event.location != null && event.location!.isNotEmpty ? event.location! : ''}
+${hasLocation ? '${event.location!}\n$mapsUrl' : ''}
 
 Soka Planner
 ''';
