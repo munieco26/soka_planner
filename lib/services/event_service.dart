@@ -46,7 +46,6 @@ class EventService {
     required String title,
     required DateTime start,
     required String createdBy,
-    String? description,
     DateTime? end,
     String? location,
     int color = 0xFF2196F3,
@@ -60,7 +59,6 @@ class EventService {
         .collection('events')
         .add({
       'title': title,
-      'description': description,
       'start': Timestamp.fromDate(start),
       'end': end != null ? Timestamp.fromDate(end) : null,
       'location': location,
@@ -83,7 +81,6 @@ class EventService {
     required String calendarId,
     required String eventId,
     String? title,
-    String? description,
     DateTime? start,
     DateTime? end,
     String? location,
@@ -97,7 +94,6 @@ class EventService {
     };
 
     if (title != null) updates['title'] = title;
-    if (description != null) updates['description'] = description;
     if (start != null) updates['start'] = Timestamp.fromDate(start);
     if (end != null) updates['end'] = Timestamp.fromDate(end);
     if (location != null) updates['location'] = location;

@@ -114,18 +114,6 @@ class _EventDetailPage extends StatelessWidget {
             if (event.location?.isNotEmpty == true)
               _buildInfoRow(Icons.place, event.location!, accent),
 
-            // Description
-            if (event.description?.isNotEmpty == true) ...[
-              const SizedBox(height: 16),
-              Text(
-                event.description!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.black87,
-                  height: 1.4,
-                ),
-              ),
-            ],
-
             // Flyer gallery
             if (event.flyerUrls.isNotEmpty) ...[
               const SizedBox(height: 16),
@@ -207,7 +195,6 @@ ${event.title}
 
 ${df.format(event.start)}
 ${event.location != null && event.location!.isNotEmpty ? event.location! : ''}
-${event.description ?? ''}
 
 Soka Planner
 ''';

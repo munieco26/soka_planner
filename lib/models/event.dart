@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Event {
   final String id;
   final String title;
-  final String? description;
   final DateTime start;
   final DateTime? end;
   final String? location;
@@ -21,7 +20,6 @@ class Event {
   const Event({
     required this.id,
     required this.title,
-    this.description,
     required this.start,
     this.end,
     this.location,
@@ -41,7 +39,6 @@ class Event {
     return Event(
       id: doc.id,
       title: data['title'] as String? ?? '',
-      description: data['description'] as String?,
       start: (data['start'] as Timestamp).toDate(),
       end: data['end'] != null ? (data['end'] as Timestamp).toDate() : null,
       location: data['location'] as String?,
@@ -64,7 +61,6 @@ class Event {
   Map<String, dynamic> toFirestore() {
     return {
       'title': title,
-      'description': description,
       'start': Timestamp.fromDate(start),
       'end': end != null ? Timestamp.fromDate(end!) : null,
       'location': location,
@@ -92,7 +88,6 @@ class Event {
   Event copyWith({
     String? id,
     String? title,
-    String? description,
     DateTime? start,
     DateTime? end,
     String? location,
@@ -109,7 +104,6 @@ class Event {
     return Event(
       id: id ?? this.id,
       title: title ?? this.title,
-      description: description ?? this.description,
       start: start ?? this.start,
       end: end ?? this.end,
       location: location ?? this.location,

@@ -77,7 +77,6 @@ class FirestoreReminderService {
         'calendarId': event.calendarId,
         'eventId': event.id,
         'eventTitle': event.title,
-        'eventDescription': event.description,
         'eventStart': Timestamp.fromDate(event.start),
         'eventEnd': event.end != null ? Timestamp.fromDate(event.end!) : null,
         'eventLocation': event.location,
@@ -446,7 +445,6 @@ class FirestoreReminderService {
           final event = Event(
             id: reminderData['eventId'] as String,
             title: reminderData['eventTitle'] as String,
-            description: reminderData['eventDescription'] as String?,
             start: eventStart,
             end: reminderData['eventEnd'] != null
                 ? (reminderData['eventEnd'] as Timestamp).toDate()

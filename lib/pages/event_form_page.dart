@@ -27,7 +27,6 @@ class EventFormPage extends StatefulWidget {
 class _EventFormPageState extends State<EventFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
 
   late DateTime _startDate;
@@ -51,7 +50,6 @@ class _EventFormPageState extends State<EventFormPage> {
     if (_isEditing) {
       final e = widget.event!;
       _titleController.text = e.title;
-      _descriptionController.text = e.description ?? '';
       _locationController.text = e.location ?? '';
       _startDate = e.start;
       _isAllDay = e.isAllDay;
@@ -73,7 +71,6 @@ class _EventFormPageState extends State<EventFormPage> {
   @override
   void dispose() {
     _titleController.dispose();
-    _descriptionController.dispose();
     _locationController.dispose();
     super.dispose();
   }
@@ -112,19 +109,6 @@ class _EventFormPageState extends State<EventFormPage> {
               ),
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Ingresá un título' : null,
-            ),
-            const SizedBox(height: 16),
-
-            // Description
-            TextFormField(
-              controller: _descriptionController,
-              decoration: InputDecoration(
-                labelText: 'Descripción (opcional)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              maxLines: 3,
             ),
             const SizedBox(height: 16),
 
@@ -291,9 +275,6 @@ class _EventFormPageState extends State<EventFormPage> {
           calendarId: widget.calendarId,
           eventId: widget.event!.id,
           title: _titleController.text.trim(),
-          description: _descriptionController.text.trim().isNotEmpty
-              ? _descriptionController.text.trim()
-              : null,
           start: startDateTime,
           end: endDateTime,
           location: _locationController.text.trim().isNotEmpty
@@ -310,9 +291,6 @@ class _EventFormPageState extends State<EventFormPage> {
           title: _titleController.text.trim(),
           start: startDateTime,
           createdBy: uid,
-          description: _descriptionController.text.trim().isNotEmpty
-              ? _descriptionController.text.trim()
-              : null,
           end: endDateTime,
           location: _locationController.text.trim().isNotEmpty
               ? _locationController.text.trim()

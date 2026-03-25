@@ -106,7 +106,6 @@ class ReminderCheckerService with WidgetsBindingObserver {
           final event = Event(
             id: reminderData['eventId'] as String,
             title: reminderData['eventTitle'] as String,
-            description: reminderData['eventDescription'] as String?,
             start: eventStart,
             end: reminderData['eventEnd'] != null
                 ? (reminderData['eventEnd'] as Timestamp).toDate()
